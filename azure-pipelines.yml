@@ -1,10 +1,10 @@
-  trigger:
+trigger:
   - '*'
   
   pool:
     vmImage: 'ubuntu-16.04'
     demands:
-    - npm
+      - npm
   
   variables:
     buildConfiguration: 'Release'
@@ -48,7 +48,6 @@
     inputs:
       SonarCloud: 'SonarCloud connection 1'
       organization: '$(SonarOrganization)'
-      scannerMode: 'MSBuild'
       projectKey: '$(SonarProjectKey)'
       projectName: '$(SonarProjectName)'
       projectVersion: '$(Build.BuildNumber)'
@@ -56,13 +55,13 @@
        sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/Coverage/coverage.opencover.xml
        sonar.exclusions=**/wwwroot/lib/**/*
     condition: |
-       and
-       (
-         succeeded(),
-         eq(variables['Build.Reason'], 'PullRequest'),
-         eq(variables['System.PullRequest.TargetBranch'], 'master')
-       )
-   
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
+  
   - task: DotNetCoreCLI@2
     displayName: 'Build the project - $(buildConfiguration)'
     inputs:
@@ -91,9 +90,23 @@
   
   - task: SonarCloudAnalyze@1
     displayName: 'Run SonarCloud code analysis'
-  
+    condition: |
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
+   
   - task: SonarCloudPublish@1
     displayName: 'Publish SonarCloud quality gate results'
+    condition: |
+      and
+      (
+        succeeded(),
+        eq(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['System.PullRequest.TargetBranch'], 'master')
+      )
   
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish code coverage report'
